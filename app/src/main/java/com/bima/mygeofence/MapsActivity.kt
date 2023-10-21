@@ -19,6 +19,8 @@ import com.bima.mygeofence.databinding.ActivityMapsBinding
 import com.google.android.gms.maps.model.CircleOptions
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.PendingIntent
+import android.content.Intent
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -65,6 +67,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
+
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
@@ -112,12 +115,24 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 }
             }
         }
+
     private fun checkPermission(permission: String): Boolean {
         return ContextCompat.checkSelfPermission(
             this,
             permission
         ) == PackageManager.PERMISSION_GRANTED
     }
+
+    private val geofencePendingIntent: PendingIntent by lazy {
+        val intent = Intent(this, GeofenceBroadcastReceiver::class.java)
+        intent.action = GeofenceBroadcastReceiver.ACTION_GEOFENCE_EVENT
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_MUTABLE)
+        } else {
+            PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        }
+    }
+
     @TargetApi(Build.VERSION_CODES.Q)
     private fun checkForegroundAndBackgroundLocationPermission(): Boolean {
         val foregroundLocationApproved = checkPermission(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -129,6 +144,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         return foregroundLocationApproved && backgroundPermissionApproved
     }
+
     @SuppressLint("MissingPermission")
     private fun getMyLocation() {
         if (checkForegroundAndBackgroundLocationPermission()) {
